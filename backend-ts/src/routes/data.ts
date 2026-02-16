@@ -121,7 +121,9 @@ router.post(
       const { error: insertErr } = await sb.from("datasets").insert(datasetDoc);
       if (insertErr) {
         console.error("Dataset insert error:", insertErr);
-        res.status(500).json({ detail: `Database insert failed: ${insertErr.message}` });
+        res
+          .status(500)
+          .json({ detail: `Database insert failed: ${insertErr.message}` });
         return;
       }
 

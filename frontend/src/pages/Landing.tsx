@@ -191,7 +191,7 @@ export default function Landing() {
                 </span>
               </div>
             ) : (
-              <div className="flex justify-center">
+              <div className="flex flex-col items-center gap-4">
                 <GoogleLogin
                   onSuccess={handleGoogleSuccess}
                   onError={handleGoogleError}
@@ -201,6 +201,40 @@ export default function Landing() {
                   shape="rectangular"
                   theme="outline"
                 />
+                {process.env.NODE_ENV === "development" && (
+                  <>
+                    <div className="flex items-center gap-3 w-full max-w-[350px]">
+                      <div className="flex-1 h-px bg-slate-200" />
+                      <span className="text-xs text-slate-400">or</span>
+                      <div className="flex-1 h-px bg-slate-200" />
+                    </div>
+                    <button
+                      data-testid="dev-login-btn"
+                      onClick={async () => {
+                        setError("");
+                        setLoading(true);
+                        try {
+                          const userData = await apiFetch<User>(
+                            "/api/auth/dev-login",
+                            { method: "POST" },
+                          );
+                          setUser(userData);
+                          navigate("/dashboard", {
+                            replace: true,
+                            state: { user: userData },
+                          });
+                        } catch (err: any) {
+                          setError(err.message || "Dev login failed");
+                        } finally {
+                          setLoading(false);
+                        }
+                      }}
+                      className="w-full max-w-[350px] bg-amber-50 border border-amber-200 text-amber-800 px-5 py-2.5 rounded-md text-sm font-medium hover:bg-amber-100 active:scale-95 transition-all"
+                    >
+                      🔧 Dev Login (localhost only)
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </div>

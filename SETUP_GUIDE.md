@@ -206,7 +206,10 @@ CREATE TABLE IF NOT EXISTS insights (
   insight_id TEXT PRIMARY KEY,
   dataset_id TEXT REFERENCES datasets(dataset_id),
   user_id TEXT REFERENCES users(user_id),
-  insights JSONB,
+  strategic_insights JSONB,
+  red_flags JSONB,
+  opportunities JSONB,
+  overall_assessment TEXT,
   generated_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -214,10 +217,12 @@ CREATE TABLE IF NOT EXISTS insights (
 CREATE TABLE IF NOT EXISTS narratives (
   narrative_id TEXT PRIMARY KEY,
   user_id TEXT REFERENCES users(user_id),
-  narrative_type TEXT,
-  content TEXT,
   dataset_id TEXT,
-  created_at TIMESTAMPTZ DEFAULT now()
+  title TEXT,
+  content TEXT,
+  type TEXT,
+  key_highlights JSONB,
+  generated_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- Updates
@@ -251,10 +256,9 @@ CREATE TABLE IF NOT EXISTS contacts (
 CREATE TABLE IF NOT EXISTS email_logs (
   log_id TEXT PRIMARY KEY,
   user_id TEXT REFERENCES users(user_id),
-  to_email TEXT,
   subject TEXT,
-  status TEXT,
-  provider_id TEXT,
+  recipients JSONB,
+  narrative_id TEXT,
   sent_at TIMESTAMPTZ DEFAULT now()
 );
 ```
