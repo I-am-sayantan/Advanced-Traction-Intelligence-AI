@@ -1,13 +1,15 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, Upload, Lightbulb, FileText, Sparkles, LogOut } from 'lucide-react';
+import { LayoutDashboard, Upload, Lightbulb, FileText, Sparkles, LogOut, PenLine, Users } from 'lucide-react';
 
 const navItems = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/upload', label: 'Upload Data', icon: Upload },
+  { path: '/updates', label: 'Journal', icon: PenLine },
   { path: '/insights', label: 'AI Insights', icon: Lightbulb },
   { path: '/narrative', label: 'Narratives', icon: FileText },
+  { path: '/contacts', label: 'Contacts', icon: Users },
 ];
 
 export default function Sidebar({ active }) {
