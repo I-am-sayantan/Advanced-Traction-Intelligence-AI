@@ -66,8 +66,10 @@ function AppRouter() {
       <Route path="/login" element={<Landing />} />
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/upload" element={<ProtectedRoute><DataUpload /></ProtectedRoute>} />
+      <Route path="/updates" element={<ProtectedRoute><Updates /></ProtectedRoute>} />
       <Route path="/insights" element={<ProtectedRoute><Insights /></ProtectedRoute>} />
       <Route path="/narrative" element={<ProtectedRoute><NarrativeGenerator /></ProtectedRoute>} />
+      <Route path="/contacts" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
