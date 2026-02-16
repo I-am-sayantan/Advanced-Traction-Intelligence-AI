@@ -2,14 +2,17 @@ import os
 import uuid
 import io
 import json
+import base64
+import asyncio
 import traceback
 from datetime import datetime, timezone, timedelta
-from typing import Optional
+from typing import Optional, List
 
 import httpx
+import resend
 import pandas as pd
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, UploadFile, File, Request, Response, Depends
+from fastapi import FastAPI, HTTPException, UploadFile, File, Request, Response, Depends, Form
 from fastapi.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel
@@ -20,6 +23,10 @@ load_dotenv()
 MONGO_URL = os.environ.get("MONGO_URL")
 DB_NAME = os.environ.get("DB_NAME")
 EMERGENT_LLM_KEY = os.environ.get("EMERGENT_LLM_KEY")
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY")
+SENDER_EMAIL = os.environ.get("SENDER_EMAIL", "onboarding@resend.dev")
+
+resend.api_key = RESEND_API_KEY
 
 app = FastAPI(title="Founder Intelligence Platform API")
 
