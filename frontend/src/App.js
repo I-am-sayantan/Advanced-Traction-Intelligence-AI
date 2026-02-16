@@ -5,8 +5,10 @@ import Landing from './pages/Landing';
 import AuthCallback from './pages/AuthCallback';
 import Dashboard from './pages/Dashboard';
 import DataUpload from './pages/DataUpload';
+import Updates from './pages/Updates';
 import Insights from './pages/Insights';
 import NarrativeGenerator from './pages/NarrativeGenerator';
+import Contacts from './pages/Contacts';
 
 function ProtectedRoute({ children }) {
   const { user, checkAuth } = useAuth();
