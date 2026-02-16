@@ -576,3 +576,370 @@ async def dashboard_overview(user: dict = Depends(get_current_user)):
 @app.get("/api/health")
 async def health():
     return {"status": "ok", "service": "Founder Intelligence Platform"}
+
+# ─── Startup Updates Journal ────────────────────────────────────
+
+@app.post("/api/updates")
+async def create_update(
+    request: Request,
+    user: dict = Depends(get_current_user),
+):
+    content_type = request.headers.get("content-type", "")
+    if "multipart/form-data" in content_type:
+        form = await request.form()
+        content = form.get("content", "")
+        tags_raw = form.get("tags", "")
+        tags = [t.strip() for t in tags_raw.split(",") if t.strip()] if tags_raw else []
+        images = []
+        for key in form:
+            if key.startswith("image"):
+                upload_file = form[key]
+                if hasattr(upload_file, "read"):
+                    img_bytes = await upload_file.read()
+                    img_b64 = base64.b64encode(img_bytes).decode("utf-8")
+                    img_type = upload_file.content_type or "image/png"
+                    images.append({"data": img_b64, "type": img_type, "name": upload_file.filename})
+    else:
+        body = await request.json()
+        content = body.get("content", "")
+        tags = body.get("tags", [])
+        images = body.get("images", [])
+
+    update_id = f"upd_{uuid.uuid4().hex[:12]}"
+    update_doc = {
+        "update_id": update_id,
+        "user_id": user["user_id"],
+        "content": content,
+        "images": images,
+        "tags": tags,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.updates.insert_one(update_doc)
+    return {k: v for k, v in update_doc.items() if k != "_id"}
+
+
+@app.get("/api/updates")
+async def list_updates(user: dict = Depends(get_current_user)):
+    cursor = db.updates.find(
+        {"user_id": user["user_id"]}, {"_id": 0}
+    ).sort("created_at", -1)
+    return await cursor.to_list(200)
+
+
+@app.get("/api/updates/{update_id}")
+async def get_update(update_id: str, user: dict = Depends(get_current_user)):
+    doc = await db.updates.find_one(
+        {"update_id": update_id, "user_id": user["user_id"]}, {"_id": 0}
+    )
+    if not doc:
+        raise HTTPException(status_code=404, detail="Update not found")
+    return doc
+
+
+@app.delete("/api/updates/{update_id}")
+async def delete_update(update_id: str, user: dict = Depends(get_current_user)):
+    result = await db.updates.delete_one({"update_id": update_id, "user_id": user["user_id"]})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Update not found")
+    return {"ok": True}
+
+
+class UpdateAnalysisRequest(BaseModel):
+    days: int = 7
+
+@app.post("/api/updates/ai-analyze")
+async def ai_analyze_updates(req: UpdateAnalysisRequest, user: dict = Depends(get_current_user)):
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=req.days)).isoformat()
+    updates = await db.updates.find(
+        {"user_id": user["user_id"], "created_at": {"$gte": cutoff}},
+        {"_id": 0, "images": 0}
+    ).sort("created_at", -1).to_list(100)
+
+    if not updates:
+        raise HTTPException(status_code=404, detail="No updates in this period")
+
+    # Also get latest metrics for context
+    latest_metrics = None
+    latest_dataset = await db.datasets.find_one(
+        {"user_id": user["user_id"]}, {"_id": 0, "data": 0},
+        sort=[("uploaded_at", -1)]
+    )
+    if latest_dataset:
+        latest_metrics = await db.metrics.find_one(
+            {"dataset_id": latest_dataset["dataset_id"], "user_id": user["user_id"]},
+            {"_id": 0, "metrics_detail": 0, "trends": 0}
+        )
+
+    updates_text = "\n\n".join([
+        f"[{u['created_at'][:10]}] {u['content']}" + (f" (tags: {', '.join(u.get('tags', []))})" if u.get('tags') else "")
+        for u in updates
+    ])
+
+    metrics_context = ""
+    if latest_metrics:
+        metrics_context = f"""
+CURRENT METRICS:
+- Growth Score: {latest_metrics.get('growth_score', 'N/A')}/100
+- Efficiency Score: {latest_metrics.get('efficiency_score', 'N/A')}/100
+- PMF Signal: {latest_metrics.get('pmf_signal', 'N/A')}/100
+- Scalability Index: {latest_metrics.get('scalability_index', 'N/A')}/100
+- Capital Efficiency: {latest_metrics.get('capital_efficiency', 'N/A')}/100
+"""
+
+    prompt = f"""You are a strategic startup advisor analyzing a founder's recent journal entries/updates.
+
+FOUNDER UPDATES ({len(updates)} entries from last {req.days} days):
+{updates_text}
+
+{metrics_context}
+
+Analyze these updates and provide a comprehensive summary. Return EXACT JSON (no markdown):
+{{
+  "summary": "2-3 sentence overview of what's been happening",
+  "key_themes": ["theme1", "theme2", "theme3"],
+  "momentum_signal": "positive|neutral|negative",
+  "suggested_metrics_to_track": ["metric1", "metric2"],
+  "recommended_update_for_investors": "A polished 3-4 sentence investor-ready update based on these journal entries",
+  "action_items": ["action1", "action2", "action3"],
+  "trend_observations": [
+    {{"observation": "...", "implication": "...", "priority": "high|medium|low"}}
+  ]
+}}
+
+Be specific, reference actual details from the updates. Think like a VC-advisor hybrid."""
+
+    try:
+        chat = LlmChat(
+            api_key=EMERGENT_LLM_KEY,
+            session_id=f"update_analysis_{uuid.uuid4().hex[:8]}",
+            system_message="You are a startup strategic advisor. Always respond with valid JSON only."
+        )
+        chat.with_model("openai", "gpt-5.2")
+        response = await chat.send_message(UserMessage(text=prompt))
+        response_text = response.strip()
+        if response_text.startswith("```"):
+            response_text = response_text.split("\n", 1)[1].rsplit("```", 1)[0]
+        analysis = json.loads(response_text)
+    except Exception as e:
+        traceback.print_exc()
+        analysis = {
+            "summary": f"Analysis error: {str(e)}",
+            "key_themes": [],
+            "momentum_signal": "neutral",
+            "suggested_metrics_to_track": [],
+            "recommended_update_for_investors": "",
+            "action_items": [],
+            "trend_observations": []
+        }
+
+    return {
+        "analysis": analysis,
+        "updates_analyzed": len(updates),
+        "period_days": req.days,
+        "analyzed_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+# ─── Contact Manager ───────────────────────────────────────────
+
+class ContactCreate(BaseModel):
+    name: str
+    email: str
+    company: Optional[str] = None
+    role: Optional[str] = None
+    tags: List[str] = []
+    notes: Optional[str] = None
+
+class ContactUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[str] = None
+    company: Optional[str] = None
+    role: Optional[str] = None
+    tags: Optional[List[str]] = None
+    notes: Optional[str] = None
+
+@app.post("/api/contacts")
+async def create_contact(req: ContactCreate, user: dict = Depends(get_current_user)):
+    existing = await db.contacts.find_one(
+        {"user_id": user["user_id"], "email": req.email}, {"_id": 0}
+    )
+    if existing:
+        raise HTTPException(status_code=400, detail="Contact with this email already exists")
+    contact_id = f"con_{uuid.uuid4().hex[:12]}"
+    contact_doc = {
+        "contact_id": contact_id,
+        "user_id": user["user_id"],
+        "name": req.name,
+        "email": req.email,
+        "company": req.company or "",
+        "role": req.role or "",
+        "tags": req.tags,
+        "notes": req.notes or "",
+        "emails_sent": 0,
+        "last_contacted": None,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.contacts.insert_one(contact_doc)
+    return {k: v for k, v in contact_doc.items() if k != "_id"}
+
+
+@app.get("/api/contacts")
+async def list_contacts(tag: Optional[str] = None, user: dict = Depends(get_current_user)):
+    query = {"user_id": user["user_id"]}
+    if tag:
+        query["tags"] = tag
+    cursor = db.contacts.find(query, {"_id": 0}).sort("name", 1)
+    return await cursor.to_list(500)
+
+
+@app.put("/api/contacts/{contact_id}")
+async def update_contact(contact_id: str, req: ContactUpdate, user: dict = Depends(get_current_user)):
+    update_fields = {k: v for k, v in req.dict().items() if v is not None}
+    if not update_fields:
+        raise HTTPException(status_code=400, detail="No fields to update")
+    result = await db.contacts.update_one(
+        {"contact_id": contact_id, "user_id": user["user_id"]},
+        {"$set": update_fields}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Contact not found")
+    doc = await db.contacts.find_one({"contact_id": contact_id}, {"_id": 0})
+    return doc
+
+
+@app.delete("/api/contacts/{contact_id}")
+async def delete_contact(contact_id: str, user: dict = Depends(get_current_user)):
+    result = await db.contacts.delete_one({"contact_id": contact_id, "user_id": user["user_id"]})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Contact not found")
+    return {"ok": True}
+
+
+@app.post("/api/contacts/import")
+async def import_contacts(file: UploadFile = File(...), user: dict = Depends(get_current_user)):
+    contents = await file.read()
+    filename = file.filename or "contacts.csv"
+    try:
+        if filename.endswith(".xlsx") or filename.endswith(".xls"):
+            df = pd.read_excel(io.BytesIO(contents))
+        else:
+            df = pd.read_csv(io.BytesIO(contents))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Could not parse file: {str(e)}")
+
+    df.columns = [c.strip().lower().replace(" ", "_") for c in df.columns]
+    if "email" not in df.columns:
+        raise HTTPException(status_code=400, detail="CSV must have an 'email' column")
+
+    imported = 0
+    skipped = 0
+    for _, row in df.iterrows():
+        email = str(row.get("email", "")).strip()
+        if not email or "@" not in email:
+            skipped += 1
+            continue
+        existing = await db.contacts.find_one(
+            {"user_id": user["user_id"], "email": email}, {"_id": 0}
+        )
+        if existing:
+            skipped += 1
+            continue
+        contact_id = f"con_{uuid.uuid4().hex[:12]}"
+        tags_raw = str(row.get("tags", row.get("tag", "")))
+        tags = [t.strip() for t in tags_raw.split(",") if t.strip()] if tags_raw else []
+        await db.contacts.insert_one({
+            "contact_id": contact_id,
+            "user_id": user["user_id"],
+            "name": str(row.get("name", row.get("first_name", ""))).strip(),
+            "email": email,
+            "company": str(row.get("company", row.get("organization", ""))).strip(),
+            "role": str(row.get("role", row.get("title", row.get("position", "")))).strip(),
+            "tags": tags,
+            "notes": str(row.get("notes", "")).strip(),
+            "emails_sent": 0,
+            "last_contacted": None,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        })
+        imported += 1
+
+    return {"imported": imported, "skipped": skipped, "total_rows": len(df)}
+
+# ─── Email Sending ──────────────────────────────────────────────
+
+class EmailSendRequest(BaseModel):
+    contact_ids: List[str]
+    subject: str
+    html_content: str
+    narrative_id: Optional[str] = None
+
+@app.post("/api/email/send")
+async def send_email(req: EmailSendRequest, user: dict = Depends(get_current_user)):
+    if not RESEND_API_KEY:
+        raise HTTPException(status_code=500, detail="Email service not configured")
+
+    contacts = []
+    for cid in req.contact_ids:
+        doc = await db.contacts.find_one(
+            {"contact_id": cid, "user_id": user["user_id"]}, {"_id": 0}
+        )
+        if doc:
+            contacts.append(doc)
+
+    if not contacts:
+        raise HTTPException(status_code=400, detail="No valid contacts found")
+
+    results = []
+    for contact in contacts:
+        try:
+            params = {
+                "from": SENDER_EMAIL,
+                "to": [contact["email"]],
+                "subject": req.subject,
+                "html": req.html_content,
+                "reply_to": user["email"],
+            }
+            email_result = await asyncio.to_thread(resend.Emails.send, params)
+            email_id = email_result.get("id") if isinstance(email_result, dict) else getattr(email_result, "id", None)
+
+            await db.contacts.update_one(
+                {"contact_id": contact["contact_id"]},
+                {"$set": {"last_contacted": datetime.now(timezone.utc).isoformat()}, "$inc": {"emails_sent": 1}}
+            )
+            results.append({"contact_id": contact["contact_id"], "email": contact["email"], "status": "sent", "email_id": email_id})
+        except Exception as e:
+            results.append({"contact_id": contact["contact_id"], "email": contact["email"], "status": "failed", "error": str(e)})
+
+    log_id = f"elog_{uuid.uuid4().hex[:12]}"
+    await db.email_logs.insert_one({
+        "log_id": log_id,
+        "user_id": user["user_id"],
+        "subject": req.subject,
+        "recipients": results,
+        "narrative_id": req.narrative_id,
+        "sent_at": datetime.now(timezone.utc).isoformat(),
+    })
+
+    sent_count = sum(1 for r in results if r["status"] == "sent")
+    return {
+        "log_id": log_id,
+        "sent": sent_count,
+        "failed": len(results) - sent_count,
+        "results": results,
+    }
+
+
+@app.get("/api/email/logs")
+async def email_logs(user: dict = Depends(get_current_user)):
+    cursor = db.email_logs.find({"user_id": user["user_id"]}, {"_id": 0}).sort("sent_at", -1)
+    return await cursor.to_list(50)
+
+
+@app.get("/api/contacts/tags")
+async def get_contact_tags(user: dict = Depends(get_current_user)):
+    pipeline = [
+        {"$match": {"user_id": user["user_id"]}},
+        {"$unwind": "$tags"},
+        {"$group": {"_id": "$tags", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}}
+    ]
+    tags = await db.contacts.aggregate(pipeline).to_list(50)
+    return [{"tag": t["_id"], "count": t["count"]} for t in tags]
