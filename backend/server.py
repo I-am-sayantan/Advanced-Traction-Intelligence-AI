@@ -259,15 +259,25 @@ def compute_growth_metrics(data: list, numeric_cols: list) -> dict:
             ratio = rev_total / cost_total
             efficiency_score = max(0, min(100, ratio * 25))
 
-    # PMF Signal (0-100): Based on retention and growth consistency
+    # PMF Signal (0-100): Based on retention/churn and growth consistency
     pmf_signal = 55
-    if retention_cols:
+    churn_cols = [c for c in numeric_cols if "churn" in c]
+    pure_retention_cols = [c for c in retention_cols if "churn" not in c]
+    if pure_retention_cols:
         ret_vals = []
-        for c in retention_cols:
+        for c in pure_retention_cols:
             if c in metrics_detail:
                 ret_vals.append(metrics_detail[c].get("latest", 0))
         if ret_vals:
             pmf_signal = max(0, min(100, sum(ret_vals) / len(ret_vals)))
+    elif churn_cols:
+        churn_vals = []
+        for c in churn_cols:
+            if c in metrics_detail:
+                churn_vals.append(metrics_detail[c].get("latest", 0))
+        if churn_vals:
+            avg_churn = sum(churn_vals) / len(churn_vals)
+            pmf_signal = max(0, min(100, 100 - avg_churn * 10))
     elif growth_rates:
         consistency = 100 - min(100, abs(pd.Series(growth_rates).std()) * 2) if len(growth_rates) > 1 else 60
         pmf_signal = max(0, min(100, (consistency + growth_score) / 2))
