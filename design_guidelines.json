@@ -1,0 +1,176 @@
+{
+  "identity": {
+    "name": "Founder Intelligence Platform",
+    "persona": "The Adult in the Room",
+    "tone": "Strategic, Precise, Trustworthy, Insightful",
+    "aesthetic": "Linear-inspired Intellectual SaaS (Light Mode)",
+    "description": "A premium intelligence platform that turns messy startup data into investable narratives."
+  },
+  "typography": {
+    "font_family": {
+      "headings": "Outfit, sans-serif",
+      "body": "Public Sans, sans-serif",
+      "mono": "JetBrains Mono, monospace"
+    },
+    "weights": {
+      "headings": [500, 600],
+      "body": [400, 500]
+    },
+    "scale": {
+      "h1": "text-4xl md:text-5xl tracking-tight leading-tight font-medium",
+      "h2": "text-3xl tracking-tight leading-snug font-medium",
+      "h3": "text-2xl tracking-tight font-medium",
+      "body": "text-base leading-relaxed text-slate-600",
+      "caption": "text-xs uppercase tracking-wider font-semibold text-slate-500",
+      "metric_huge": "text-5xl font-semibold tracking-tighter text-slate-900",
+      "metric_label": "text-sm font-medium text-slate-500"
+    },
+    "installation": "Import from Google Fonts: Outfit (400, 500, 600, 700) and Public Sans (400, 500, 600). JetBrains Mono for data."
+  },
+  "colors": {
+    "background": {
+      "page": "#F9FAFB",
+      "card": "#FFFFFF",
+      "sidebar": "#F3F4F6",
+      "input": "#FFFFFF"
+    },
+    "primary": {
+      "main": "#4F46E5",
+      "hover": "#4338CA",
+      "light": "#EEF2FF",
+      "text": "#FFFFFF"
+    },
+    "text": {
+      "primary": "#111827",
+      "secondary": "#4B5563",
+      "tertiary": "#9CA3AF",
+      "inverse": "#FFFFFF"
+    },
+    "border": {
+      "subtle": "rgba(0,0,0,0.06)",
+      "default": "#E5E7EB",
+      "active": "#6366F1"
+    },
+    "status": {
+      "success": "#10B981",
+      "success_bg": "#ECFDF5",
+      "warning": "#F59E0B",
+      "warning_bg": "#FFFBEB",
+      "error": "#EF4444",
+      "error_bg": "#FEF2F2",
+      "info": "#3B82F6",
+      "info_bg": "#EFF6FF"
+    },
+    "charts": {
+      "palette": ["#4F46E5", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6"]
+    }
+  },
+  "layout": {
+    "container": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+    "grid": {
+      "dashboard": "grid grid-cols-1 md:grid-cols-12 gap-6",
+      "card_metric": "col-span-12 md:col-span-4 lg:col-span-3",
+      "card_chart": "col-span-12 md:col-span-8 lg:col-span-6",
+      "card_feed": "col-span-12 md:col-span-4 lg:col-span-3"
+    },
+    "spacing": {
+      "section": "py-12 md:py-20",
+      "card_padding": "p-6",
+      "element_gap": "gap-4"
+    },
+    "radius": {
+      "card": "rounded-xl",
+      "button": "rounded-md",
+      "input": "rounded-md"
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-[#111827] text-white hover:bg-black/90 shadow-sm border border-transparent transition-all active:scale-95",
+      "secondary": "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 shadow-sm transition-all active:scale-95",
+      "ghost": "bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors",
+      "destructive": "bg-red-50 text-red-600 hover:bg-red-100 border border-red-200"
+    },
+    "cards": {
+      "default": "bg-white border border-slate-100 shadow-[0_2px_4px_rgba(0,0,0,0.02)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.04)] transition-shadow duration-300",
+      "highlight": "bg-gradient-to-br from-white to-slate-50 border border-indigo-100 shadow-sm"
+    },
+    "inputs": {
+      "default": "bg-white border-slate-200 text-slate-900 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-slate-400"
+    },
+    "badges": {
+      "base": "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
+      "success": "bg-emerald-50 text-emerald-700 border border-emerald-100",
+      "warning": "bg-amber-50 text-amber-700 border border-amber-100",
+      "neutral": "bg-slate-100 text-slate-700 border border-slate-200"
+    }
+  },
+  "visual_enhancers": {
+    "noise": "bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none fixed inset-0 z-0",
+    "glass_header": "bg-white/80 backdrop-blur-lg border-b border-slate-200/50 sticky top-0 z-50",
+    "chart_gradient": "Apply a subtle linear gradient fill to area charts (opacity 0.2 to 0)",
+    "skeletons": "animate-pulse bg-slate-100 rounded"
+  },
+  "motion": {
+    "hover": "transition-all duration-200 ease-in-out",
+    "enter": "animate-in fade-in zoom-in-95 duration-300",
+    "list_stagger": "stagger-children-100"
+  },
+  "assets": {
+    "libraries": [
+      "recharts",
+      "lucide-react",
+      "framer-motion",
+      "clsx",
+      "tailwind-merge",
+      "sonner"
+    ],
+    "icons": "Use Lucide React. stroke-width=1.5 for a refined look. Size 16px or 20px usually."
+  },
+  "page_specifics": {
+    "dashboard": {
+      "layout": "Bento Grid Mode B",
+      "key_elements": "Composite Score Cards (Ring Progress), Trend Charts (Line), Signal Feed (List)",
+      "chart_style": "Minimal axes, grid lines dashed slate-200, tooltips custom styled"
+    },
+    "narrative_generator": {
+      "layout": "Two-column: Controls (Left/Right) + Document Preview (Center)",
+      "vibe": "Editor / IDE feel. Clean canvas."
+    },
+    "landing": {
+      "hero": "Centered, heavy typography, screenshot tilt illustration",
+      "social_proof": "Monochrome logos with opacity 0.5"
+    }
+  },
+  "image_urls": {
+    "placeholders": {
+      "user_avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix",
+      "chart_placeholder": "Use Recharts component instead of images"
+    }
+  },
+  "instructions_to_main_agent": [
+    "INSTALL FONTS FIRST: Add Outfit and Public Sans to index.html or import in CSS.",
+    "NO DEFAULT SHADOWS: Use custom shadow classes defined in colors/components.",
+    "BORDERS: borders should be extremely subtle (slate-100 or slate-200).",
+    "DATA DENSITY: Don't be afraid of small text (text-xs) for secondary data labels.",
+    "COMPOSITE SCORES: Visualize these distinctively (e.g., a RadialBarChart for 'Growth Score').",
+    "USE SONNER: For all notifications (success, error).",
+    "STRICT PADDING: Metric cards need p-6.",
+    "Keep the UI 'Business Clean'. No playful illustrations. Use abstract geometric shapes if needed.",
+    "Refer to 'UNIVERSAL GUIDELINES FOR MAIN AGENT' for implementation details."
+  ],
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "Dark colors look good when used independently without gradients. DO NOT use dark colors as gradients",
+    "Don't make generic centered layouts, simplistic gradients, and uniform styling.",
+    "Create depth through layered design elements with z-index hierarchy",
+    "Use glass-morphism effects with backdrop filters (12-24px blur)",
+    "You MUST NOT apply universal transition. Eg: transition: all. This results in breaking transforms. Always add transitions for specific interactive elements like button, input excluding transforms",
+    "You MUST NOT center align the app container, ie do not add .App { text-align: center; } in the css file. This disrupts the human natural reading flow of text",
+    "Always use modern button styles like pill-shaped, or sharp button with interaction animations & color relevant to the app style",
+    "NEVER: use AI assistant Emoji characters for icons.",
+    "Every interaction needs micro-animations - hover states, transitions, parallax effects, and entrance animations. Static = dead.",
+    "Use 2-3x more spacing than feels comfortable. Cramped designs look cheap.",
+    "Subtle grain textures, noise overlays, custom cursors, selection states, and loading animations: separates good from extraordinary.",
+    "Main agent relies on these image URLs. Missing categories (especially sponsor logos) = main agent will use placeholder text which is FORBIDDEN"
+  ]
+}
