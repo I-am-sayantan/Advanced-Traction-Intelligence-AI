@@ -9,29 +9,41 @@ import Insights from './pages/Insights';
 import NarrativeGenerator from './pages/NarrativeGenerator';
 
 function ProtectedRoute({ children }) {
-  const { user, loading, checkAuth } = useAuth();
+  const { user, checkAuth } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const [isAuthenticated, setIsAuthenticated] = useState(location.state?.user ? true : null);
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    location.state?.user ? true : (user ? true : null)
+  );
 
   useEffect(() => {
-    if (location.state?.user) return;
+    if (location.state?.user || user) {
+      setIsAuthenticated(true);
+      return;
+    }
+    let cancelled = false;
     (async () => {
       const userData = await checkAuth();
-      setIsAuthenticated(!!userData);
-      if (!userData) navigate('/', { replace: true });
+      if (cancelled) return;
+      if (userData) {
+        setIsAuthenticated(true);
+      } else {
+        setIsAuthenticated(false);
+        navigate('/', { replace: true });
+      }
     })();
-  }, [checkAuth, location.state, navigate]);
+    return () => { cancelled = true; };
+  }, [checkAuth, location.state, navigate, user]);
 
-  if (isAuthenticated === null && !location.state?.user) {
+  if (isAuthenticated === null) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-page">
+      <div className="min-h-screen flex items-center justify-center bg-page" data-testid="auth-loading">
         <div className="w-8 h-8 border-2 border-brand border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
-  if (isAuthenticated === false && !location.state?.user) {
+  if (isAuthenticated === false) {
     return <Navigate to="/" replace />;
   }
 
