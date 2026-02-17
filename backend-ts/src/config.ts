@@ -8,5 +8,9 @@ export const config = {
   resendApiKey: process.env.RESEND_API_KEY || "",
   senderEmail: process.env.SENDER_EMAIL || "onboarding@resend.dev",
   googleClientId: process.env.GOOGLE_CLIENT_ID || "",
+  googleClientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+  googleRedirectUri:
+    process.env.GOOGLE_REDIRECT_URI ||
+    "http://localhost:3000/auth/google/callback",
   port: parseInt(process.env.PORT || "8000", 10),
 };

@@ -8,6 +8,9 @@ import insightsRouter from "./routes/insights";
 import updatesRouter from "./routes/updates";
 import contactsRouter from "./routes/contacts";
 import emailRouter from "./routes/email";
+import domainRouter from "./routes/domains";
+import smtpRouter from "./routes/smtp";
+import gmailRouter from "./routes/gmail";
 
 const app = express();
 
@@ -26,6 +29,9 @@ app.use("/api", insightsRouter); // /api/insights/*, /api/narrative/*, /api/narr
 app.use("/api/updates", updatesRouter);
 app.use("/api/contacts", contactsRouter);
 app.use("/api/email", emailRouter);
+app.use("/api/email/domains", domainRouter);
+app.use("/api/email/smtp", smtpRouter);
+app.use("/api/email/gmail", gmailRouter);
 
 // ─── Health ─────────────────────────────────────────────────────
 

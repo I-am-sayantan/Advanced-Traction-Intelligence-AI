@@ -10,6 +10,7 @@ import {
   LogOut,
   PenLine,
   Users,
+  Settings,
 } from "lucide-react";
 
 interface NavItem {
@@ -25,6 +26,7 @@ const navItems: NavItem[] = [
   { path: "/insights", label: "AI Insights", icon: Lightbulb },
   { path: "/narrative", label: "Narratives", icon: FileText },
   { path: "/contacts", label: "Contacts", icon: Users },
+  { path: "/email-settings", label: "Email Setup", icon: Settings },
 ];
 
 interface SidebarProps {

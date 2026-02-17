@@ -261,6 +261,20 @@ CREATE TABLE IF NOT EXISTS email_logs (
   narrative_id TEXT,
   sent_at TIMESTAMPTZ DEFAULT now()
 );
+
+-- User Settings (for email sender config + SMTP)
+CREATE TABLE IF NOT EXISTS user_settings (
+  user_id TEXT PRIMARY KEY REFERENCES users(user_id),
+  sender_email TEXT,
+  sender_name TEXT,
+  email_method TEXT,           -- 'smtp' or 'resend' or null
+  smtp_host TEXT,
+  smtp_port INTEGER,
+  smtp_secure BOOLEAN,
+  smtp_user TEXT,
+  smtp_pass TEXT,              -- In production, encrypt this
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
 ```
 
 ## Troubleshooting

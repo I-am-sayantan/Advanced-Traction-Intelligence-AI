@@ -16,6 +16,7 @@ import Updates from "./pages/Updates";
 import Insights from "./pages/Insights";
 import NarrativeGenerator from "./pages/NarrativeGenerator";
 import Contacts from "./pages/Contacts";
+import EmailSettings from "./pages/EmailSettings";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -118,6 +119,14 @@ function AppRouter() {
         element={
           <ProtectedRoute>
             <Contacts />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/email-settings"
+        element={
+          <ProtectedRoute>
+            <EmailSettings />
           </ProtectedRoute>
         }
       />
